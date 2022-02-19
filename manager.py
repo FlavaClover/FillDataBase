@@ -2,8 +2,9 @@ import sqlite3 as sqll
 
 
 class Manager:
-    def __init__(self, db_name: str):
+    def __init__(self, db_name: str, table_name: str):
         self.db_name = db_name
+        self.table_name = table_name
         if not self.db_name.endswith('.db'):
             self.db_name += '.db'
 
@@ -32,12 +33,73 @@ class Manager:
     def random(self, count=1):
         return list()
 
-    def generate_random_inserts(self, table_name: str, count=1,
-                                ignore=[], renames_col={}):
+    def generate_random_inserts(self, count=1, ignore=[], renames_col={}):
         objs = self.random(count=count)
-        return self.__generate_inserts(objs, table_name,
+        return self.__generate_inserts(objs, self.table_name,
                                        ignore=ignore,
                                        renames_col=renames_col)
+
+    def __do_inserts(self, inserts: list):
+        errors = {}
+        succ = 0
+        try:
+            connection = sqll.connect(self.db_name)
+            cursor = connection.cursor()
+
+            for i in range(len(inserts)):
+                try:
+                    cursor.execute(inserts[i])
+                    succ += 1
+                except sqll.Error as error:
+                    if str(error) in errors:
+                        errors[str(error)] += 1
+                    else:
+                        errors[str(error)] = 1
+            connection.commit()
+            cursor.close()
+        except sqll.Error as error:
+            if str(error) in errors:
+                errors[str(error)] += 1
+            else:
+                errors[str(error)] = 1
+            print('Error:', error)
+        finally:
+            if connection:
+                connection.close()
+        return succ, errors
+
+    def do_random_inserts(self, count=1, ignore=[], renames_col={}):
+        return self.__do_inserts(self.generate_random_inserts(
+                        count,
+                        ignore=ignore,
+                        renames_col=renames_col))
+
+    def get_objects(self, tablename: str, cols=None, toplimit=None):
+        record = []
+        try:
+            connection = sqll.connect(self.db_name)
+            cursor = connection.cursor()
+
+            query = 'SELECT '
+            if cols:
+                query += ', '.join(cols)
+            else:
+                query += '*'
+
+            query += f' FROM {tablename}'
+
+            cursor.execute(query)
+            record = cursor.fetchall()
+            if toplimit:
+                record = record[:toplimit]
+            cursor.close()
+        except sqll.Error as error:
+            print('Error:', error)
+        finally:
+            if connection:
+                connection.close()
+
+            return record
 
     def check_db(self):
         try:
@@ -57,3 +119,4 @@ class Manager:
             if connection:
                 connection.close()
                 print('Connection closed')
+

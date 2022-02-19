@@ -1,7 +1,10 @@
 from datetime import datetime
+from settings import DEPT_TABLE, DB_NAME
 from manager import Manager
+from department import DepartmentManager
 from mimesis import Person, Datetime
 from mimesis.enums import Gender
+from random import randint
 
 
 class Worker:
@@ -20,18 +23,20 @@ class Worker:
 
 
 class WorkerManager(Manager):
-    def __init__(self, db_name: str):
-        super().__init__(db_name)
+    def __init__(self, db_name: str, table_name: str):
+        super().__init__(db_name, table_name)
 
     def random(self, count=1):
         person = Person('ru')
         dt_time = Datetime()
+        d_manager = DepartmentManager(DB_NAME, DEPT_TABLE)
+        depts = d_manager.get_departments()
 
         workers = list()
         for _ in range(count):
             workers.append(Worker(
                 person.full_name(gender=Gender.MALE),
-                None,
+                depts[randint(0, len(depts) - 1)].id_dept,
                 dt_time.date(start=1900, end=2021)
             ))
 

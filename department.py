@@ -1,4 +1,5 @@
 from datetime import datetime
+from settings import DEPT_TABLE
 from manager import Manager
 from mimesis import Datetime, Text, Address
 from mimesis.enums import Gender
@@ -20,8 +21,8 @@ class Department:
 
 
 class DepartmentManager(Manager):
-    def __init__(self, db_name: str):
-        super().__init__(db_name)
+    def __init__(self, db_name: str, table_name: str):
+        super().__init__(db_name, table_name)
 
     def random(self, count=1):
         text = Text('ru')
@@ -38,3 +39,11 @@ class DepartmentManager(Manager):
             )
 
         return departments
+
+    def get_departments(self, toplimit=None):
+        cols = ['id_dept', 'name', 'town', 'start_date']
+        depts = self.get_objects(self.table_name,
+                                 cols=cols,
+                                 toplimit=toplimit)
+        depts = [Department(i[1], i[2], i[3], id_dept=i[0]) for i in depts]
+        return depts
