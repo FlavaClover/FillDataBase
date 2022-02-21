@@ -62,7 +62,6 @@ class Manager:
                 errors[str(error)] += 1
             else:
                 errors[str(error)] = 1
-            print('Error:', error)
         finally:
             if connection:
                 connection.close()
@@ -74,7 +73,7 @@ class Manager:
                         ignore=ignore,
                         renames_col=renames_col))
 
-    def get_objects(self, tablename: str, cols=None, toplimit=None):
+    def get_objects(self, cols=None, toplimit=None):
         record = []
         try:
             connection = sqll.connect(self.db_name)
@@ -86,7 +85,7 @@ class Manager:
             else:
                 query += '*'
 
-            query += f' FROM {tablename}'
+            query += f' FROM {self.table_name}'
 
             cursor.execute(query)
             record = cursor.fetchall()
@@ -100,6 +99,27 @@ class Manager:
                 connection.close()
 
             return record
+
+    def get_count(self):
+        errors = {}
+        count = None
+        try:
+            connection = sqll.connect(self.db_name)
+            cursor = connection.cursor()
+
+            query = 'SELECT COUNT(*) FROM ' + self.table_name
+
+            cursor.execute(query)
+            count = int(cursor.fetchall()[0][0])
+
+            cursor.close()
+        except sqll.Error as error:
+            errors[str(error)] = 1
+        finally:
+            if connection:
+                connection.close()
+
+            return count, errors
 
     def check_db(self):
         try:

@@ -41,3 +41,10 @@ class WorkerManager(Manager):
             ))
 
         return workers
+
+    def get_workers(self, count=1):
+        cols = ['id_worker', 'fullname', 'id_dept', 'start_date']
+        workers = self.get_objects(cols=cols, toplimit=count)
+
+        workers = [Worker(i[1], int(i[2]), i[3], id_worker=int(i[0])) for i in workers]
+        return workers
